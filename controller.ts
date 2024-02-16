@@ -1,16 +1,18 @@
 import { isMobile } from "./util";
+import Vector2 from "./vector2";
 
 type EventType =  "keydown" | "keyup"
 
 export class Controller{
-  direction: {x:number,y:number};
+  direction: Vector2;
   isMobile: boolean;
+  pos: Vector2
+  prevPos: Vector2
 
   constructor(){
-    this.direction ={
-      x:0,
-      y:0
-    },
+    this.direction = new Vector2(0,0)
+    this.prevPos = new Vector2(0,0)
+    this.pos = new Vector2(0,0)
     this.isMobile = isMobile()
 
     this.init = this.init.bind(this)
@@ -34,10 +36,18 @@ export class Controller{
   initTouchListener(){
     const el = document.getElementsByTagName("canvas")[0];
     if(el){
-      el.addEventListener("touchstart", this.onTouchStart);
-      el.addEventListener("touchend", this.onTouchEnd);
-      el.addEventListener("touchcancel", this.onTouchCancel);
-      el.addEventListener("touchmove", this.onTouchMove);
+      const style = {
+        height: "100%",
+        overflow: "hidden",
+        width: "100%",
+        position: "fixed",
+      }
+      Object.keys(style).forEach((key)=>el.style[key] = style[key])
+
+      document.addEventListener("touchstart", this.onTouchStart);
+      document.addEventListener("touchend", this.onTouchEnd);
+      document.addEventListener("touchcancel", this.onTouchCancel);
+      document.addEventListener("touchmove", this.onTouchMove);
       console.log("Touch listener initialised")
     }
   }
@@ -55,19 +65,47 @@ export class Controller{
   }
 
   onTouchStart(ev: TouchEvent) {
-    console.log("onTouchStart",ev)
+    const touch = ev.touches[0]
+    this.pos = new Vector2(touch.pageX,touch.pageY)
+
+    const dir = Vector2.subtract(this.prevPos,this.pos)
+    const normalDir =  Vector2.normalize(dir)
+    console.log(dir)
+
+    if(normalDir){
+      this.direction = {
+        x: Math.min(Math.max(normalDir.x, -1), 1),
+        y: Math.min(Math.max(normalDir.y, -1), 1)
+      }
+    }
+    
+    this.prevPos = this.pos
   }
 
   onTouchEnd(ev: TouchEvent) {
-    console.log("onTouchEnd",ev)
+    this.direction = new Vector2(0,0)
   }
 
   onTouchCancel(ev: TouchEvent) {
-    console.log("onTouchCancel",ev)
+    this.direction = new Vector2(0,0)
   }
 
   onTouchMove(ev: TouchEvent) {
-    console.log("onTouchMove",ev)
+    const touch = ev.touches[0]
+    this.pos = new Vector2(touch.pageX,touch.pageY)
+
+    const dir = Vector2.subtract(this.prevPos,this.pos)
+    const normalDir =  Vector2.normalize(dir)
+    console.log(dir)
+
+    if(normalDir){
+      this.direction = {
+        x: Math.min(Math.max(normalDir.x, -1), 1),
+        y: Math.min(Math.max(normalDir.y, -1), 1)
+      }
+    }
+    
+    this.prevPos = this.pos
   }
 
   interporateKey(key:string,eventType: EventType){
